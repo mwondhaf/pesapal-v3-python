@@ -5,7 +5,7 @@ This example demonstrates basic usage of the pesapal-v3 client
 without web framework dependencies.
 
 To run this example:
-1. Install the package: pip install pesapal-v3
+1. Install the package: pip install git+https://github.com/mwondhaf/pesapal-v3-python.git
 2. Set your credentials as environment variables
 3. Run: python simple_example.py
 """

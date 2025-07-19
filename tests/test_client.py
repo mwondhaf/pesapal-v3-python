@@ -131,3 +131,200 @@ class TestPesapalClient:
         with Pesapal(test_config) as client:
             assert client.session is not None
         # Session should be closed after context exit
+    
+    def test_refund_transaction_completed(self, test_config):
+        """Test refund for a completed transaction."""
+        with requests_mock.Mocker() as m:
+            # Mock auth response
+            m.post(
+                f"{test_config.api_base_url}/Auth/RequestToken",
+                json={"token": "test_token_123", "expiryDate": 3600}
+            )
+            
+            # Mock transaction status response - completed transaction
+            m.get(
+                f"{test_config.api_base_url}/Transactions/GetTransactionStatus",
+                json={
+                    "payment_status_description": "Completed",
+                    "amount": 1000.0,
+                    "currency": "KES",
+                    "payment_method": "M-Pesa"
+                }
+            )
+            
+            client = Pesapal(test_config)
+            refund_result = client.refund_transaction("tracking_123", amount=500.0, reason="Customer request")
+            
+            assert refund_result['order_tracking_id'] == "tracking_123"
+            assert refund_result['refund_amount'] == 500.0
+            assert refund_result['transaction_amount'] == 1000.0
+            assert refund_result['request_type'] == 'partial_refund'
+            assert refund_result['status'] == 'refund_requested'
+            assert 'instructions' in refund_result
+            assert 'support_details' in refund_result
+    
+    def test_refund_transaction_full_amount(self, test_config):
+        """Test full refund for a completed transaction."""
+        with requests_mock.Mocker() as m:
+            # Mock auth response
+            m.post(
+                f"{test_config.api_base_url}/Auth/RequestToken",
+                json={"token": "test_token_123", "expiryDate": 3600}
+            )
+            
+            # Mock transaction status response - completed transaction
+            m.get(
+                f"{test_config.api_base_url}/Transactions/GetTransactionStatus",
+                json={
+                    "payment_status_description": "Completed",
+                    "amount": 1000.0,
+                    "currency": "KES",
+                    "payment_method": "M-Pesa"
+                }
+            )
+            
+            client = Pesapal(test_config)
+            refund_result = client.refund_transaction("tracking_123")  # No amount = full refund
+            
+            assert refund_result['refund_amount'] == 1000.0
+            assert refund_result['request_type'] == 'full_refund'
+    
+    def test_refund_transaction_not_completed(self, test_config):
+        """Test refund attempt for non-completed transaction."""
+        with requests_mock.Mocker() as m:
+            # Mock auth response
+            m.post(
+                f"{test_config.api_base_url}/Auth/RequestToken",
+                json={"token": "test_token_123", "expiryDate": 3600}
+            )
+            
+            # Mock transaction status response - pending transaction
+            m.get(
+                f"{test_config.api_base_url}/Transactions/GetTransactionStatus",
+                json={
+                    "payment_status_description": "Pending",
+                    "amount": 1000.0,
+                    "currency": "KES"
+                }
+            )
+            
+            client = Pesapal(test_config)
+            
+            with pytest.raises(PesapalError, match="not completed and cannot be refunded"):
+                client.refund_transaction("tracking_123")
+    
+    def test_refund_amount_exceeds_transaction(self, test_config):
+        """Test refund with amount exceeding transaction amount."""
+        with requests_mock.Mocker() as m:
+            # Mock auth response
+            m.post(
+                f"{test_config.api_base_url}/Auth/RequestToken",
+                json={"token": "test_token_123", "expiryDate": 3600}
+            )
+            
+            # Mock transaction status response - completed transaction
+            m.get(
+                f"{test_config.api_base_url}/Transactions/GetTransactionStatus",
+                json={
+                    "payment_status_description": "Completed",
+                    "amount": 1000.0,
+                    "currency": "KES"
+                }
+            )
+            
+            client = Pesapal(test_config)
+            
+            with pytest.raises(PesapalError, match="cannot exceed transaction amount"):
+                client.refund_transaction("tracking_123", amount=1500.0)
+    
+    def test_cancel_order_pending(self, test_config):
+        """Test cancellation of pending transaction."""
+        with requests_mock.Mocker() as m:
+            # Mock auth response
+            m.post(
+                f"{test_config.api_base_url}/Auth/RequestToken",
+                json={"token": "test_token_123", "expiryDate": 3600}
+            )
+            
+            # Mock transaction status response - pending transaction
+            m.get(
+                f"{test_config.api_base_url}/Transactions/GetTransactionStatus",
+                json={
+                    "payment_status_description": "Pending",
+                    "amount": 1000.0,
+                    "currency": "KES"
+                }
+            )
+            
+            client = Pesapal(test_config)
+            cancel_result = client.cancel_order("tracking_123", reason="Customer changed mind")
+            
+            assert cancel_result['order_tracking_id'] == "tracking_123"
+            assert cancel_result['current_status'] == "Pending"
+            assert cancel_result['request_type'] == 'cancellation'
+            assert cancel_result['status'] == 'cancellation_requested'
+            assert 'instructions' in cancel_result
+            assert 'support_details' in cancel_result
+    
+    def test_cancel_order_completed(self, test_config):
+        """Test cancellation attempt for completed transaction."""
+        with requests_mock.Mocker() as m:
+            # Mock auth response
+            m.post(
+                f"{test_config.api_base_url}/Auth/RequestToken",
+                json={"token": "test_token_123", "expiryDate": 3600}
+            )
+            
+            # Mock transaction status response - completed transaction
+            m.get(
+                f"{test_config.api_base_url}/Transactions/GetTransactionStatus",
+                json={
+                    "payment_status_description": "Completed",
+                    "amount": 1000.0,
+                    "currency": "KES"
+                }
+            )
+            
+            client = Pesapal(test_config)
+            
+            with pytest.raises(PesapalError, match="cannot be cancelled"):
+                client.cancel_order("tracking_123")
+    
+    def test_cancel_order_processing(self, test_config):
+        """Test cancellation of processing transaction."""
+        with requests_mock.Mocker() as m:
+            # Mock auth response
+            m.post(
+                f"{test_config.api_base_url}/Auth/RequestToken",
+                json={"token": "test_token_123", "expiryDate": 3600}
+            )
+            
+            # Mock transaction status response - processing transaction
+            m.get(
+                f"{test_config.api_base_url}/Transactions/GetTransactionStatus",
+                json={
+                    "payment_status_description": "Processing",
+                    "amount": 1000.0,
+                    "currency": "KES"
+                }
+            )
+            
+            client = Pesapal(test_config)
+            cancel_result = client.cancel_order("tracking_123", reason="Urgent cancellation")
+            
+            assert cancel_result['current_status'] == "Processing"
+            assert cancel_result['status'] == 'cancellation_requested'
+    
+    def test_refund_invalid_tracking_id(self, test_config):
+        """Test refund with invalid tracking ID."""
+        client = Pesapal(test_config)
+        
+        with pytest.raises(ValueError, match="order_tracking_id is required"):
+            client.refund_transaction("")
+    
+    def test_cancel_invalid_tracking_id(self, test_config):
+        """Test cancellation with invalid tracking ID."""
+        client = Pesapal(test_config)
+        
+        with pytest.raises(ValueError, match="order_tracking_id is required"):
+            client.cancel_order("")

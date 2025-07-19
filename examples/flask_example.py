@@ -5,7 +5,7 @@ This example demonstrates how to integrate Pesapal payments
 in a Flask web application using the pesapal-v3 client.
 
 To run this example:
-1. Install dependencies: pip install flask pesapal-v3 python-dotenv
+1. Install dependencies: pip install flask git+https://github.com/mwondhaf/pesapal-v3-python.git python-dotenv
 2. Create a .env file with your Pesapal credentials
 3. Run: python flask_example.py
 """

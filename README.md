@@ -1,7 +1,8 @@
 # Pesapal Python Client for API v3
 
-[![PyPI version](https://badge.fury.io/py/pesapal-v3.svg)](https://badge.fury.io/py/pesapal-v3)
-[![Python Support](https://img.shields.io/pypi/pyversions/pesapal-v3.svg)](https://pypi.org/project/pesapal-v3/)
+[![GitHub](https://img.shields.io/badge/GitHub-pesapal--v3--python-blue?logo=github)](https://github.com/mwondhaf/pesapal-v3-python)
+[![Python Support](https://img.shields.io/badge/python-3.7%2B-blue)](https://github.com/mwondhaf/pesapal-v3-python)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/mwondhaf/pesapal-v3-python/blob/main/LICENSE)
 
 A lightweight, easy-to-use Python client for integrating Pesapal payment services into your applications. Perfect for beginners and experienced developers alike!
 
@@ -15,8 +16,22 @@ A lightweight, easy-to-use Python client for integrating Pesapal payment service
 
 ## 📦 Installation
 
+### Install from GitHub (Recommended)
+
 ```bash
-pip install pesapal-v3
+pip install git+https://github.com/mwondhaf/pesapal-v3-python.git
+```
+
+### Alternative Installation Methods
+
+```bash
+# Install specific version/tag
+pip install git+https://github.com/mwondhaf/pesapal-v3-python.git@v1.0.0
+
+# Install from downloaded source
+git clone https://github.com/mwondhaf/pesapal-v3-python.git
+cd pesapal-v3-python
+pip install .
 ```
 
 ## 🎯 Quick Start
@@ -76,8 +91,8 @@ billing_address = BillingAddress(
 # Create order
 order_data = OrderData(
     id='unique-order-id',  # Your unique order ID
-    currency='KES',
-    amount=1000,
+    currency='UGX',
+    amount=10000,
     description='Payment for goods',
     callback_url='https://yourdomain.com/payment-callback',
     notification_id='your-ipn-id',  # From register_ipn response
@@ -97,6 +112,48 @@ print(f"Payment Status: {status.status}")
 print(f"Amount: {status.amount} {status.currency}")
 ```
 
+### Refund Transactions
+
+```python
+# Full refund for completed transaction
+refund_result = pesapal.refund_transaction(
+    order_tracking_id='ORDER_TRACKING_ID',
+    reason='Customer requested refund'
+)
+
+# Partial refund
+partial_refund = pesapal.refund_transaction(
+    order_tracking_id='ORDER_TRACKING_ID',
+    amount=500.0,  # Partial amount
+    reason='Partial refund for damaged item'
+)
+
+print(f"Refund Status: {refund_result['status']}")
+print(f"Refund Amount: {refund_result['refund_amount']}")
+
+# Instructions for manual processing
+for instruction in refund_result['instructions']:
+    print(f"• {instruction}")
+```
+
+### Cancel Orders
+
+```python
+# Cancel pending transaction
+cancel_result = pesapal.cancel_order(
+    order_tracking_id='ORDER_TRACKING_ID',
+    reason='Customer cancelled order'
+)
+
+print(f"Cancellation Status: {cancel_result['status']}")
+print(f"Current Transaction Status: {cancel_result['current_status']}")
+
+# Get support contact information
+if 'support_details' in cancel_result:
+    support = cancel_result['support_details']
+    print(f"Support Email: {support['support_email']}")
+```
+
 ## 🚀 Quick Start Guide for Beginners
 
 ### Step 1: Get Your Pesapal Credentials
@@ -105,7 +162,7 @@ print(f"Amount: {status.amount} {status.currency}")
 3. Copy your Consumer Key and Consumer Secret
 
 ### Step 2: Setup Your Project
-1. Install the package: `pip install pesapal-v3`
+1. Install the package: `pip install git+https://github.com/mwondhaf/pesapal-v3-python.git`
 2. Create a `.env` file with your credentials
 3. Initialize the Pesapal client in your code
 
@@ -216,11 +273,17 @@ if __name__ == '__main__':
 ### `Pesapal(config)`
 Main client class for interacting with Pesapal API.
 
-**Methods:**
+**Core Methods:**
 - `get_auth_token(force_refresh=False)` - Get authentication token
 - `register_ipn(ipn_data)` - Register IPN URL
 - `submit_order(order_data)` - Submit order for payment
 - `get_transaction_status(order_tracking_id)` - Get transaction status
+
+**Refund & Cancellation Methods:**
+- `refund_transaction(order_tracking_id, amount=None, reason="Customer refund")` - Request refund
+- `cancel_order(order_tracking_id, reason="Customer cancellation")` - Cancel order
+
+**Note**: Pesapal API v3 doesn't provide direct refund/cancellation endpoints. These methods provide structured guidance for manual processing via merchant dashboard or support.
 
 ### Data Classes
 

@@ -20,7 +20,7 @@ from .types import (
     PesapalError,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Francis Mwondha"
 __email__ = "mwondha@example.com"
 

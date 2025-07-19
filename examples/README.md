@@ -40,11 +40,35 @@ python flask_example.py
 - python-dotenv
 - pesapal-v3
 
+### 3. Refund and Cancellation Example (`refund_cancel_example.py`)
+
+Interactive example demonstrating:
+- Transaction status checking
+- Refund processing (full and partial)
+- Order cancellation
+- Error handling for refunds/cancellations
+- Support contact information
+
+**Run:**
+```bash
+python refund_cancel_example.py
+```
+
+**Features:**
+- Interactive prompts for tracking ID input
+- Full and partial refund examples
+- Cancellation workflow
+- Comprehensive error handling
+- Support guidance for manual processing
+
+**Requirements:**
+- pesapal-v3
+
 ## Setup
 
 1. **Install the package:**
    ```bash
-   pip install pesapal-v3
+   pip install git+https://github.com/mwondhaf/pesapal-v3-python.git
    ```
 
 2. **Set environment variables:**

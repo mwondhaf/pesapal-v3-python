@@ -301,6 +301,146 @@ class Pesapal:
         
         return TransactionStatusResponse.from_dict(response_data)
 
+    def refund_transaction(self, order_tracking_id: str, amount: Optional[float] = None, reason: str = "Customer refund") -> Dict[str, Any]:
+        """
+        Initiate a refund for a completed transaction.
+        
+        Note: Pesapal API v3 does not have explicit refund endpoints in the public documentation.
+        This method checks transaction status and provides guidance for manual refund processing.
+        For actual refunds, contact Pesapal support or use the merchant dashboard.
+        
+        Args:
+            order_tracking_id: The order tracking ID of the transaction to refund
+            amount: Optional partial refund amount. If None, full refund is requested
+            reason: Reason for the refund
+            
+        Returns:
+            Dict containing refund request details and next steps
+            
+        Raises:
+            PesapalError: If transaction status check fails or transaction cannot be refunded
+        """
+        if not order_tracking_id:
+            raise ValueError("order_tracking_id is required")
+        
+        # First, check the transaction status
+        try:
+            status = self.get_transaction_status(order_tracking_id)
+        except Exception as e:
+            raise PesapalError(f"Failed to check transaction status: {str(e)}")
+        
+        # Check if transaction is eligible for refund
+        if not hasattr(status, 'payment_status_description') or status.payment_status_description != 'Completed':
+            raise PesapalError(f"Transaction with ID {order_tracking_id} is not completed and cannot be refunded. Status: {getattr(status, 'payment_status_description', 'Unknown')}")
+        
+        # Calculate refund amount
+        transaction_amount = getattr(status, 'amount', 0)
+        refund_amount = amount if amount is not None else transaction_amount
+        
+        if amount is not None and amount > transaction_amount:
+            raise PesapalError(f"Refund amount ({amount}) cannot exceed transaction amount ({transaction_amount})")
+        
+        # Prepare refund request data
+        refund_data = {
+            'order_tracking_id': order_tracking_id,
+            'transaction_amount': transaction_amount,
+            'refund_amount': refund_amount,
+            'reason': reason,
+            'request_type': 'partial_refund' if amount is not None else 'full_refund',
+            'status': 'refund_requested',
+            'timestamp': time.time(),
+            'instructions': [
+                'Pesapal API v3 does not provide direct refund endpoints.',
+                'To process this refund, please:',
+                '1. Log into your Pesapal merchant dashboard',
+                '2. Navigate to Transactions > Find this transaction',
+                '3. Use the refund option in the dashboard',
+                'Or contact Pesapal support with the following details:'
+            ],
+            'support_details': {
+                'order_tracking_id': order_tracking_id,
+                'refund_amount': refund_amount,
+                'reason': reason,
+                'support_email': 'support@pesapal.com',
+                'merchant_phone': '+254-70-619-1729'
+            }
+        }
+        
+        logger.info(f"Refund requested for transaction {order_tracking_id}: {refund_amount} (reason: {reason})")
+        
+        return refund_data
+
+    def cancel_order(self, order_tracking_id: str, reason: str = "Customer cancellation") -> Dict[str, Any]:
+        """
+        Cancel a pending transaction.
+        
+        Note: Pesapal API v3 does not have explicit cancellation endpoints in the public documentation.
+        This method checks transaction status and provides guidance for cancellation.
+        
+        Args:
+            order_tracking_id: The order tracking ID of the transaction to cancel
+            reason: Reason for the cancellation
+            
+        Returns:
+            Dict containing cancellation request details and next steps
+            
+        Raises:
+            PesapalError: If transaction status check fails or transaction cannot be cancelled
+        """
+        if not order_tracking_id:
+            raise ValueError("order_tracking_id is required")
+        
+        # Check current transaction status
+        try:
+            status = self.get_transaction_status(order_tracking_id)
+        except Exception as e:
+            raise PesapalError(f"Failed to check transaction status: {str(e)}")
+        
+        # Check if transaction can be cancelled
+        status_description = getattr(status, 'payment_status_description', 'Unknown')
+        
+        if status_description in ['Completed', 'Failed']:
+            raise PesapalError(f"Transaction with ID {order_tracking_id} cannot be cancelled. Status: {status_description}")
+        
+        if status_description in ['Pending', 'Processing']:
+            # Transaction can potentially be cancelled
+            cancellation_data = {
+                'order_tracking_id': order_tracking_id,
+                'current_status': status_description,
+                'reason': reason,
+                'request_type': 'cancellation',
+                'status': 'cancellation_requested',
+                'timestamp': time.time(),
+                'instructions': [
+                    'Pesapal API v3 does not provide direct cancellation endpoints.',
+                    'For pending/processing transactions, consider:',
+                    '1. Contact customer to stop any payment attempts',
+                    '2. Monitor transaction status - pending transactions may expire automatically',
+                    '3. If needed, contact Pesapal support for manual cancellation',
+                    '4. Use merchant dashboard to manage the transaction'
+                ],
+                'support_details': {
+                    'order_tracking_id': order_tracking_id,
+                    'reason': reason,
+                    'support_email': 'support@pesapal.com',
+                    'merchant_phone': '+254-70-619-1729'
+                }
+            }
+            
+            logger.info(f"Cancellation requested for transaction {order_tracking_id} (status: {status_description}, reason: {reason})")
+            
+            return cancellation_data
+        
+        # For other statuses, provide generic guidance
+        return {
+            'order_tracking_id': order_tracking_id,
+            'current_status': status_description,
+            'reason': reason,
+            'status': 'cancellation_not_applicable',
+            'message': f"Transaction status '{status_description}' does not require cancellation",
+            'timestamp': time.time()
+        }
+
     def close(self) -> None:
         """Close the HTTP session."""
         if self.session:
