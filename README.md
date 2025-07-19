@@ -354,14 +354,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙋‍♂️ Support
 
 - **Documentation**: [Pesapal API Documentation](https://developer.pesapal.com/how-to-integrate/e-commerce/api-30-json/api-reference)
-- **Issues**: [GitHub Issues](https://github.com/mwondhaf/pesapal-v3/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/mwondhaf/pesapal-v3/discussions)
+- **Issues**: [GitHub Issues](https://github.com/mwondhaf/pesapal-v3-python/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/mwondhaf/pesapal-v3-python/discussions)
 
 ## 👨‍💻 Maintainer
 
 **Francis Mwondha**
 - GitHub: [@mwondhaf](https://github.com/mwondhaf)
-- Repository: [pesapal-v3](https://github.com/mwondhaf/pesapal-v3)
+- Repository: [pesapal-v3-python](https://github.com/mwondhaf/pesapal-v3-python)
 
 ---
 

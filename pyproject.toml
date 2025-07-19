@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pesapal-v3"
+version = "1.0.0"
+description = "A Python client for interacting with the Pesapal API v3"
+readme = "README.md"
+requires-python = ">=3.7"
+license = "MIT"
+authors = [
+    {name = "Francis Mwondha", email = "mwondha@example.com"}
+]
+keywords = ["pesapal", "payment", "gateway", "api", "python"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Office/Business :: Financial :: Point-Of-Sale",
+]
+dependencies = [
+    "requests>=2.25.0",
+    "typing-extensions>=4.0.0; python_version<'3.8'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.10",
+    "requests-mock>=1.8",
+    "black>=21.0",
+    "flake8>=3.8",
+    "mypy>=0.812",
+    "isort>=5.0",
+]
+test = [
+    "pytest>=6.0",
+    "pytest-cov>=2.10",
+    "requests-mock>=1.8",
+]
+
+[project.urls]
+Homepage = "https://github.com/mwondhaf/pesapal-v3-python"
+Repository = "https://github.com/mwondhaf/pesapal-v3-python"
+Documentation = "https://github.com/mwondhaf/pesapal-v3-python#readme"
+"Bug Tracker" = "https://github.com/mwondhaf/pesapal-v3-python/issues"
+
+[tool.setuptools.packages.find]
+include = ["pesapal_v3*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py37', 'py38', 'py39', 'py310', 'py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.7"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
